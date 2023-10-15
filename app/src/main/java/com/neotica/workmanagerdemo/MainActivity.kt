@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.work.Constraints
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -84,9 +81,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    //Step 12 run the tasks on newIntent
+    //Step 12.1 run the tasks on newIntent
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        //Step 12.2
         val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent?.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
         } else {
@@ -105,7 +103,7 @@ class MainActivity : ComponentActivity() {
             .build()
         //Step 16.2
         viewModel.updateWorkId(request.id)
-        //Step 13.3
+        //Step 16.3
         workManager.enqueue(request)
     }
 }

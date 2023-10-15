@@ -20,13 +20,15 @@ class PhotoCompressionWorker(
     private val params: WorkerParameters
 ): CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
+        //Step 9
         return withContext(Dispatchers.IO) {
-            //Step 9
+            //Step 9.1
             val stringUri = params.inputData.getString(KEY_CONTENT_URI)
             val compressionThresholdInBytes = params.inputData.getLong(
                 KEY_COMPRESSION_THRESHOLD,
                 0L
             )
+            //Step 9.2
             val uri = Uri.parse(stringUri)
             val bytes = appContext.contentResolver.openInputStream(uri)?.use {
                 it.readBytes()
