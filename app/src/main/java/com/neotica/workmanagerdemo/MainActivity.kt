@@ -13,17 +13,17 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,6 +40,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import coil.compose.AsyncImage
 import com.neotica.workmanagerdemo.ui.theme.WorkManagerDemoTheme
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import java.io.OutputStream
 import java.util.Objects
@@ -63,7 +64,8 @@ class MainActivity : ComponentActivity() {
     //Step 13.1 lateinit the workmanager
     private lateinit var workManager: WorkManager
     //Step 15 instantiate viewmodel
-    private val viewModel by viewModels<PhotoViewModel>()
+    val viewModel: PhotoViewModel by viewModel()
+   // private val viewModel by viewModels<PhotoViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,23 +105,37 @@ class MainActivity : ComponentActivity() {
                                 AsyncImage(model = it, contentDescription = uncompressedText)
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            if (viewModel.compressedBitmap == null) {
-                                Text(text = "Howdy?")
+
+                            val compressedText = "Compressed photo"
+                            if (viewModel.isWorkerRunning){
+                                Text(text = "$compressedText:")
                                 CircularProgressIndicator()
                             } else {
-                                viewModel.compressedBitmap?.let {
-                                    val compressedText = "Compressed photo"
-                                    Text(text = "$compressedText:")
-                                    Image(bitmap = it.asImageBitmap(), contentDescription = compressedText)
-                                    Button(onClick = {
-                                        saveImageToLibrary(it)
-                                    }) {
-                                        Text("Download")
+                                if (viewModel.compressedBitmap == null) {
+                                    Text(text = "Howdy?")
+                                } else {
+                                    viewModel.compressedBitmap?.let {
+                                        Text(text = "$compressedText:")
+                                        Image(bitmap = it.asImageBitmap(), contentDescription = compressedText)
+                                        Text("Save picture:")
+                                        LazyRow {
+                                            item {
+                                                val percentages = listOf(10, 30, 50, 100)
+                                                for (percentage in percentages) {
+                                                    Button(
+                                                        modifier = Modifier.padding(5.dp),
+                                                        onClick = { saveImageToLibrary(it, percentage) },
+                                                    ) {
+                                                        Text("$percentage%")
+                                                    }
+                                                }
+                                            }
+                                        }
+
                                     }
                                 }
+
                             }
-
-
                         }
                     }
                 }
@@ -155,7 +171,7 @@ class MainActivity : ComponentActivity() {
     }
 
     //Save image
-    private fun saveImageToLibrary(bitmap: Bitmap){
+    private fun saveImageToLibrary(bitmap: Bitmap, quality: Int){
         val resolver = contentResolver
         val contentValues = ContentValues()
         val fos: OutputStream
@@ -164,7 +180,7 @@ class MainActivity : ComponentActivity() {
         contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES+File.separator+"NeoFolder")
         val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         fos = resolver.openOutputStream(Objects.requireNonNull(imageUri)!!)!!
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, fos)
         Objects.requireNonNull(fos)
     }
 
@@ -247,19 +263,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
-    //Save file
-    private fun saveFileToGallery() {
-        // >> Android Q
-        val fos: OutputStream
-        val resolver = contentResolver
-        val contentValues = ContentValues()
-        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "image_${dataDir.absoluteFile}" + "jpg")
-        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg")
-        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES+File.separator+"TestFolder")
-        //val imageUri = resolver.insert()
+@Composable
+fun MainScreen() {
 
-    }
 }
 
 @Composable

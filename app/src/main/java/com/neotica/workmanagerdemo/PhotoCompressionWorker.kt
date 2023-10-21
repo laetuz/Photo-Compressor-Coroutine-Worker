@@ -72,7 +72,7 @@ class PhotoCompressionWorker(
         file.writeBitmapToFile(bitmap)
 
         // Save to the library
-        saveImageToLibrary(bitmap)
+        //saveImageToLibrary(bitmap)
 
         return file
     }
